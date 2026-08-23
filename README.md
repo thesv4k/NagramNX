@@ -1,7 +1,7 @@
 # NagramNX
 
 <p align="center">
-  <img src="TMessagesProj/src/main/res/drawable-xxxhdpi/ic_launcher.png" width="128" height="128" alt="NagramNX Logo" />
+  <img src="https://raw.githubusercontent.com/thesv4k/NagramNX/refs/heads/main/assets/logos/nagram_blue_round.png" width="128" height="128" alt="NagramNX Logo" />
 </p>
 
 <p align="center">
