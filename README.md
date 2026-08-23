@@ -1,19 +1,17 @@
+<div align="center">
+
 # NagramNX
 
-<p align="center">
-  <img src="https://raw.githubusercontent.com/thesv4k/NagramNX/refs/heads/main/assets/logos/nagram_blue_round.png" width="128" height="128" alt="NagramNX" />
-</p>
+<img src="https://raw.githubusercontent.com/thesv4k/NagramNX/main/assets/logos/nagram_blue_round.png" width="128" height="128" alt="NagramNX" />
 
-<p align="center">
-  <b>Форк Telegram для Android с упором на обход блокировок и работу через прокси.</b>
-</p>
+### Форк Telegram для Android с упором на обход блокировок и работу через прокси.
 
-<p align="center">
-  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Релиз" /></a>
-  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/downloads/thesv4k/NagramNX/total.svg?style=flat-square&color=blue" alt="Скачивания" /></a>
-  <a href="https://github.com/thesv4k/NagramNX/actions"><img src="https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/build-release.yml?style=flat-square" alt="Статус сборки" /></a>
-  <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="Лицензия" /></a>
-</p>
+[![Релиз](https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue)](https://github.com/thesv4k/NagramNX/releases)
+[![Скачивания](https://img.shields.io/github/downloads/thesv4k/NagramNX/total?style=flat-square&color=blue)](https://github.com/thesv4k/NagramNX/releases)
+[![Статус сборки](https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/build-release.yml?style=flat-square)](https://github.com/thesv4k/NagramNX/actions)
+[![Лицензия](https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square)](https://github.com/thesv4k/NagramNX/blob/main/LICENSE)
+
+</div>
 
 ---
 
