@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Релиз" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/downloads/thesv4k/NagramNX/total.svg?style=flat-square&color=blue" alt="Скачивания" /></a>
   <a href="https://github.com/thesv4k/NagramNX/actions"><img src="https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/build-release.yml?style=flat-square" alt="Статус сборки" /></a>
   <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="Лицензия" /></a>
 </p>
