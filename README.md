@@ -71,7 +71,7 @@ NagramNX полностью открыт (Open Source). Мы гарантиру�
 
 1. **Прозрачный код:**
    Все изменения относительно оригинального NagramX можно посмотреть в один клик:
-   👉 [**Сравнить diff с upstream NagramX**](https://github.com/thesv4k/NagramNX/compare/risin42:NagramX:dev...thesv4k:NagramNX:main)
+   👉 [**Сравнить diff с upstream NagramX**](https://github.com/thesv4k/NagramNX/compare/upstream-base...main)
    Добавлены только `SingBoxManager.kt`, `VlessUriParser.kt`, `ProxyRotationController.java` и нативный код `tg-ws-proxy`.
 
 2. **Как проверить трафик самостоятельно (для параноиков):**
