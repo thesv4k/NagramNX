@@ -753,3 +753,56 @@ if (!(condition)) {       \
 #undef ENSURE
     } while (1);
 }
+
+#include <dlfcn.h>
+
+typedef int (*StartProxyFunc)(const char *host, int port, const char *dc_ips, const char *secret, int verbose);
+typedef int (*StopProxyFunc)();
+
+static void *tgws_handle = nullptr;
+static StartProxyFunc fn_StartProxy = nullptr;
+static StopProxyFunc fn_StopProxy = nullptr;
+
+static bool load_tgws_lib() {
+    if (fn_StartProxy != nullptr) return true;
+    tgws_handle = dlopen("libtgwsproxy.so", RTLD_NOW);
+    if (!tgws_handle) {
+        tgws_handle = dlopen(nullptr, RTLD_NOW);
+    }
+    if (tgws_handle) {
+        fn_StartProxy = (StartProxyFunc) dlsym(tgws_handle, "StartProxy");
+        fn_StopProxy = (StopProxyFunc) dlsym(tgws_handle, "StopProxy");
+    }
+    return (fn_StartProxy != nullptr && fn_StopProxy != nullptr);
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_tw_nekomimi_nekogram_proxy_TgWsProxyNative_nativeStartProxy(JNIEnv *env, jclass clazz, jstring host, jint port, jstring dc_ips, jstring secret, jint verbose) {
+    if (!load_tgws_lib()) {
+        return -100;
+    }
+    const char *hostStr = host != nullptr ? env->GetStringUTFChars(host, nullptr) : "127.0.0.1";
+    const char *dcIpsStr = dc_ips != nullptr ? env->GetStringUTFChars(dc_ips, nullptr) : nullptr;
+    const char *secretStr = secret != nullptr ? env->GetStringUTFChars(secret, nullptr) : nullptr;
+
+    int res = fn_StartProxy(hostStr, port, dcIpsStr, secretStr, verbose);
+
+    if (host != nullptr) env->ReleaseStringUTFChars(host, hostStr);
+    if (dc_ips != nullptr) env->ReleaseStringUTFChars(dc_ips, dcIpsStr);
+    if (secret != nullptr) env->ReleaseStringUTFChars(secret, secretStr);
+    return res;
+}
+
+extern "C"
+JNIEXPORT jint JNICALL
+Java_tw_nekomimi_nekogram_proxy_TgWsProxyNative_nativeStopProxy(JNIEnv *env, jclass clazz) {
+    if (!load_tgws_lib()) {
+        return 0;
+    }
+    if (fn_StopProxy != nullptr) {
+        return fn_StopProxy();
+    }
+    return 0;
+}
+

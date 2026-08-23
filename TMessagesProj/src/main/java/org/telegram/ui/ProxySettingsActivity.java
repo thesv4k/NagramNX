@@ -77,6 +77,8 @@ public class ProxySettingsActivity extends BaseFragment {
 
     private final static int TYPE_SOCKS5 = 0;
     private final static int TYPE_MTPROTO = 1;
+    private final static int TYPE_WEB = 2;
+    private final static int TYPE_VLESS = 3;
 
     private final static int FIELD_IP = 0;
     private final static int FIELD_PORT = 1;
@@ -89,12 +91,12 @@ public class ProxySettingsActivity extends BaseFragment {
     private LinearLayout linearLayout2;
     private LinearLayout inputFieldsContainer;
     private HeaderCell headerCell;
-    private ShadowSectionCell[] sectionCell = new ShadowSectionCell[3];
-    private TextInfoPrivacyCell[] bottomCells = new TextInfoPrivacyCell[2];
+    private ShadowSectionCell[] sectionCell = new ShadowSectionCell[4];
+    private TextInfoPrivacyCell[] bottomCells = new TextInfoPrivacyCell[4];
     private TextSettingsCell shareCell;
     private TextSettingsCell pasteCell;
     private ActionBarMenuItem doneItem;
-    private RadioCell[] typeCell = new RadioCell[2];
+    private RadioCell[] typeCell = new RadioCell[4];
     private int currentType = -1;
 
     private int pasteType = -1;
@@ -213,14 +215,36 @@ public class ProxySettingsActivity extends BaseFragment {
                     }
                     currentProxyInfo.address = inputFields[FIELD_IP].getText().toString();
                     currentProxyInfo.port = Utilities.parseInt(inputFields[FIELD_PORT].getText().toString());
-                    if (currentType == 0) {
+                    if (currentType == TYPE_SOCKS5) {
                         currentProxyInfo.secret = "";
                         currentProxyInfo.username = inputFields[FIELD_USER].getText().toString();
                         currentProxyInfo.password = inputFields[FIELD_PASSWORD].getText().toString();
-                    } else {
+                        currentProxyInfo.proxyType = SharedConfig.PROXY_TYPE_SOCKS5;
+                    } else if (currentType == TYPE_MTPROTO) {
                         currentProxyInfo.secret = inputFields[FIELD_SECRET].getText().toString();
                         currentProxyInfo.username = "";
                         currentProxyInfo.password = "";
+                        currentProxyInfo.proxyType = SharedConfig.PROXY_TYPE_MTPROTO;
+                    } else if (currentType == TYPE_VLESS) {
+                        String secretText = inputFields[FIELD_SECRET].getText().toString().trim();
+                        if (!secretText.startsWith("vless://") && !secretText.startsWith("trojan://") && !secretText.startsWith("ss://") && !secretText.startsWith("vmess://")) {
+                            secretText = "vless://" + secretText + "@" + currentProxyInfo.address + ":" + currentProxyInfo.port + "?security=none";
+                        }
+                        currentProxyInfo.secret = secretText;
+                        currentProxyInfo.username = "";
+                        currentProxyInfo.password = "";
+                        currentProxyInfo.proxyType = SharedConfig.PROXY_TYPE_VLESS;
+                    } else {
+                        String secretText = inputFields[FIELD_SECRET].getText().toString().trim();
+                        if (TextUtils.isEmpty(secretText)) {
+                            secretText = "web_apiws";
+                        } else if (!secretText.startsWith("web_") && !secretText.startsWith("web://") && !secretText.startsWith("wss://") && !"web".equals(secretText)) {
+                            secretText = "web_" + secretText;
+                        }
+                        currentProxyInfo.secret = secretText;
+                        currentProxyInfo.username = "";
+                        currentProxyInfo.password = "";
+                        currentProxyInfo.proxyType = SharedConfig.PROXY_TYPE_WEB;
                     }
 
                     SharedPreferences preferences = MessagesController.getGlobalMainSettings();
@@ -272,14 +296,18 @@ public class ProxySettingsActivity extends BaseFragment {
 
         final View.OnClickListener typeCellClickListener = view -> setProxyType((Integer) view.getTag(), true);
 
-        for (int a = 0; a < 2; a++) {
+        for (int a = 0; a < 4; a++) {
             typeCell[a] = new RadioCell(context);
             typeCell[a].setBackground(Theme.getSelectorDrawable(true));
             typeCell[a].setTag(a);
             if (a == 0) {
                 typeCell[a].setText(LocaleController.getString(R.string.UseProxySocks5), a == currentType, true);
+            } else if (a == 1) {
+                typeCell[a].setText(LocaleController.getString(R.string.UseProxyTelegram), a == currentType, true);
+            } else if (a == 2) {
+                typeCell[a].setText("WEB-proxy (WebSocket / HTTPS)", a == currentType, true);
             } else {
-                typeCell[a].setText(LocaleController.getString(R.string.UseProxyTelegram), a == currentType, false);
+                typeCell[a].setText("VLESS (Reality / Sing-box / Trojan)", a == currentType, false);
             }
             linearLayout2.addView(typeCell[a], LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, 50));
             typeCell[a].setOnClickListener(typeCellClickListener);
@@ -413,6 +441,34 @@ public class ProxySettingsActivity extends BaseFragment {
                 case FIELD_SECRET:
                     inputFields[a].setHintText(LocaleController.getString(R.string.UseProxySecret));
                     inputFields[a].setText(currentProxyInfo.secret);
+                    inputFields[a].addTextChangedListener(new TextWatcher() {
+                        @Override
+                        public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+
+                        @Override
+                        public void onTextChanged(CharSequence s, int start, int before, int count) {}
+
+                        @Override
+                        public void afterTextChanged(Editable s) {
+                            if (ignoreOnTextChange) return;
+                            String text = s.toString().trim();
+                            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)(vless|trojan|ss|vmess)://[^\\s#]+(#[^\\s\\r\\n]*)?").matcher(text);
+                            if (matcher.find()) {
+                                String link = matcher.group();
+                                tw.nekomimi.nekogram.proxy.VlessConfig vless = tw.nekomimi.nekogram.proxy.VlessUriParser.INSTANCE.parseVless(link);
+                                if (vless != null) {
+                                    ignoreOnTextChange = true;
+                                    inputFields[FIELD_IP].setText(vless.getServer());
+                                    inputFields[FIELD_PORT].setText(String.valueOf(vless.getPort()));
+                                    ignoreOnTextChange = false;
+                                    if (currentType != TYPE_VLESS) {
+                                        setProxyType(TYPE_VLESS, true);
+                                    }
+                                }
+                            }
+                            checkShareDone(true);
+                        }
+                    });
                     break;
             }
             inputFields[a].setSelection(inputFields[a].length());
@@ -436,13 +492,19 @@ public class ProxySettingsActivity extends BaseFragment {
             });
         }
 
-        for (int i = 0; i < 2; i++) {
+        for (int i = 0; i < 4; i++) {
             bottomCells[i] = new TextInfoPrivacyCell(context);
             bottomCells[i].setBackground(Theme.getThemedDrawableByKey(context, R.drawable.greydivider_bottom, Theme.key_windowBackgroundGrayShadow));
             if (i == 0) {
                 bottomCells[i].setText(LocaleController.getString(R.string.UseProxyInfo));
-            } else {
+            } else if (i == 1) {
                 bottomCells[i].setText(LocaleController.getString(R.string.UseProxyTelegramInfo) + "\n\n" + LocaleController.getString(R.string.UseProxyTelegramInfo2));
+                bottomCells[i].setVisibility(View.GONE);
+            } else if (i == 2) {
+                bottomCells[i].setText("WEB-proxy masks Telegram MTProto traffic under standard HTTPS / WebSocket connections to web.telegram.org:443, allowing you to bypass DPI blocks.");
+                bottomCells[i].setVisibility(View.GONE);
+            } else {
+                bottomCells[i].setText("VLESS Reality / gRPC / WS — прямой обход блокировок без внешнего VPN. Вставьте ссылку формата vless://, trojan://, ss:// или vmess://.");
                 bottomCells[i].setVisibility(View.GONE);
             }
             linearLayout2.addView(bottomCells[i], LayoutHelper.createLinear(LayoutHelper.MATCH_PARENT, LayoutHelper.WRAP_CONTENT));
@@ -458,7 +520,7 @@ public class ProxySettingsActivity extends BaseFragment {
                     if (pasteType == TYPE_SOCKS5 && i == FIELD_SECRET) {
                         continue;
                     }
-                    if (pasteType == TYPE_MTPROTO && (i == FIELD_USER || i == FIELD_PASSWORD)) {
+                    if ((pasteType == TYPE_MTPROTO || pasteType == TYPE_WEB || pasteType == TYPE_VLESS) && (i == FIELD_USER || i == FIELD_PASSWORD)) {
                         continue;
                     }
                     if (pasteFields[i] != null) {
@@ -478,7 +540,7 @@ public class ProxySettingsActivity extends BaseFragment {
                         if (pasteType == TYPE_SOCKS5 && i != FIELD_SECRET) {
                             continue;
                         }
-                        if (pasteType == TYPE_MTPROTO && i != FIELD_USER && i != FIELD_PASSWORD) {
+                        if ((pasteType == TYPE_MTPROTO || pasteType == TYPE_WEB || pasteType == TYPE_VLESS) && i != FIELD_USER && i != FIELD_PASSWORD) {
                             continue;
                         }
                         inputFields[i].setText(null);
@@ -516,7 +578,13 @@ public class ProxySettingsActivity extends BaseFragment {
                     }
                     params.append("port=").append(URLEncoder.encode(port, "UTF-8"));
                 }
-                if (currentType == 1) {
+                if (currentType == TYPE_WEB) {
+                    url = "https://t.me/proxy?";
+                    if (params.length() != 0) {
+                        params.append("&");
+                    }
+                    params.append("secret=").append(URLEncoder.encode(secret.startsWith("web_") ? secret : "web_" + secret, "UTF-8"));
+                } else if (currentType == TYPE_MTPROTO) {
                     url = "https://t.me/proxy?";
                     if (params.length() != 0) {
                         params.append("&");
@@ -561,7 +629,17 @@ public class ProxySettingsActivity extends BaseFragment {
         checkShareDone(false);
 
         currentType = -1;
-        setProxyType(TextUtils.isEmpty(currentProxyInfo.secret) ? 0 : 1, false);
+        int initialType;
+        if (currentProxyInfo.isVlessProxy()) {
+            initialType = TYPE_VLESS;
+        } else if (currentProxyInfo.isWebProxy()) {
+            initialType = TYPE_WEB;
+        } else if (!TextUtils.isEmpty(currentProxyInfo.secret)) {
+            initialType = TYPE_MTPROTO;
+        } else {
+            initialType = TYPE_SOCKS5;
+        }
+        setProxyType(initialType, false);
 
         pasteType = -1;
         pasteString = null;
@@ -592,19 +670,31 @@ public class ProxySettingsActivity extends BaseFragment {
         pasteString = clipText;
         pasteFields = new String[inputFields.length];
         if (clipText != null) {
+            java.util.regex.Matcher matcher = java.util.regex.Pattern.compile("(?i)(vless|trojan|ss|vmess)://[^\\s#]+(#[^\\s\\r\\n]*)?").matcher(clipText);
+            if (matcher.find()) {
+                String link = matcher.group();
+                tw.nekomimi.nekogram.proxy.VlessConfig vless = tw.nekomimi.nekogram.proxy.VlessUriParser.INSTANCE.parseVless(link);
+                pasteType = TYPE_VLESS;
+                pasteFields[FIELD_IP] = vless != null ? vless.getServer() : link;
+                pasteFields[FIELD_PORT] = vless != null ? String.valueOf(vless.getPort()) : "443";
+                pasteFields[FIELD_SECRET] = link;
+            }
+
             String[] params = null;
 
-            final String[] socksStrings = {"t.me/socks?", "tg://socks?"};
-            for (int i = 0; i < socksStrings.length; i++) {
-                final int index = clipText.indexOf(socksStrings[i]);
-                if (index >= 0) {
-                    pasteType = TYPE_SOCKS5;
-                    params = clipText.substring(index + socksStrings[i].length()).split("&");
-                    break;
+            if (pasteType == -1) {
+                final String[] socksStrings = {"t.me/socks?", "tg://socks?"};
+                for (int i = 0; i < socksStrings.length; i++) {
+                    final int index = clipText.indexOf(socksStrings[i]);
+                    if (index >= 0) {
+                        pasteType = TYPE_SOCKS5;
+                        params = clipText.substring(index + socksStrings[i].length()).split("&");
+                        break;
+                    }
                 }
             }
 
-            if (params == null) {
+            if (pasteType == -1 && params == null) {
                 final String[] proxyStrings = {"t.me/proxy?", "tg://proxy?"};
                 for (int i = 0; i < proxyStrings.length; i++) {
                     final int index = clipText.indexOf(proxyStrings[i]);
@@ -640,6 +730,9 @@ public class ProxySettingsActivity extends BaseFragment {
                         case "secret":
                             if (pasteType == TYPE_MTPROTO) {
                                 pasteFields[FIELD_SECRET] = pair[1];
+                                if (pair[1].startsWith("web_") || pair[1].startsWith("web://") || pair[1].startsWith("wss://") || "web".equals(pair[1])) {
+                                    pasteType = TYPE_WEB;
+                                }
                             }
                             break;
                     }
@@ -743,18 +836,60 @@ public class ProxySettingsActivity extends BaseFragment {
             if (currentType == 0) {
                 bottomCells[0].setVisibility(View.VISIBLE);
                 bottomCells[1].setVisibility(View.GONE);
+                bottomCells[2].setVisibility(View.GONE);
+                bottomCells[3].setVisibility(View.GONE);
                 ((View) inputFields[FIELD_SECRET].getParent()).setVisibility(View.GONE);
                 ((View) inputFields[FIELD_PASSWORD].getParent()).setVisibility(View.VISIBLE);
                 ((View) inputFields[FIELD_USER].getParent()).setVisibility(View.VISIBLE);
+                inputFields[FIELD_IP].setHintText(LocaleController.getString(R.string.UseProxyAddress));
+                inputFields[FIELD_SECRET].setHintText(LocaleController.getString(R.string.UseProxySecret));
             } else if (currentType == 1) {
                 bottomCells[0].setVisibility(View.GONE);
                 bottomCells[1].setVisibility(View.VISIBLE);
+                bottomCells[2].setVisibility(View.GONE);
+                bottomCells[3].setVisibility(View.GONE);
                 ((View) inputFields[FIELD_SECRET].getParent()).setVisibility(View.VISIBLE);
                 ((View) inputFields[FIELD_PASSWORD].getParent()).setVisibility(View.GONE);
                 ((View) inputFields[FIELD_USER].getParent()).setVisibility(View.GONE);
+                inputFields[FIELD_IP].setHintText(LocaleController.getString(R.string.UseProxyAddress));
+                inputFields[FIELD_SECRET].setHintText(LocaleController.getString(R.string.UseProxySecret));
+            } else if (currentType == 2) {
+                bottomCells[0].setVisibility(View.GONE);
+                bottomCells[1].setVisibility(View.GONE);
+                bottomCells[2].setVisibility(View.VISIBLE);
+                bottomCells[3].setVisibility(View.GONE);
+                ((View) inputFields[FIELD_SECRET].getParent()).setVisibility(View.VISIBLE);
+                ((View) inputFields[FIELD_PASSWORD].getParent()).setVisibility(View.GONE);
+                ((View) inputFields[FIELD_USER].getParent()).setVisibility(View.GONE);
+                inputFields[FIELD_IP].setHintText(LocaleController.getString(R.string.UseProxyAddress) + " (e.g. web.telegram.org)");
+                inputFields[FIELD_SECRET].setHintText("Endpoint Path (/apiws)");
+                if (TextUtils.isEmpty(inputFields[FIELD_IP].getText())) {
+                    inputFields[FIELD_IP].setText("web.telegram.org");
+                }
+                if (TextUtils.isEmpty(inputFields[FIELD_PORT].getText()) || "1080".equals(inputFields[FIELD_PORT].getText().toString())) {
+                    inputFields[FIELD_PORT].setText("443");
+                }
+                if (TextUtils.isEmpty(inputFields[FIELD_SECRET].getText())) {
+                    inputFields[FIELD_SECRET].setText("web_apiws");
+                }
+            } else if (currentType == 3) {
+                bottomCells[0].setVisibility(View.GONE);
+                bottomCells[1].setVisibility(View.GONE);
+                bottomCells[2].setVisibility(View.GONE);
+                bottomCells[3].setVisibility(View.VISIBLE);
+                ((View) inputFields[FIELD_SECRET].getParent()).setVisibility(View.VISIBLE);
+                ((View) inputFields[FIELD_PASSWORD].getParent()).setVisibility(View.GONE);
+                ((View) inputFields[FIELD_USER].getParent()).setVisibility(View.GONE);
+                inputFields[FIELD_IP].setHintText("Адрес сервера (Server / SNI)");
+                inputFields[FIELD_SECRET].setHintText("Ссылка VLESS / UUID / Reality (vless://...)");
+                if (TextUtils.isEmpty(inputFields[FIELD_PORT].getText()) || "1080".equals(inputFields[FIELD_PORT].getText().toString())) {
+                    inputFields[FIELD_PORT].setText("443");
+                }
             }
             typeCell[0].setChecked(currentType == 0, animated);
             typeCell[1].setChecked(currentType == 1, animated);
+            typeCell[2].setChecked(currentType == 2, animated);
+            typeCell[3].setChecked(currentType == 3, animated);
         }
     }
 

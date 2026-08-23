@@ -379,6 +379,9 @@ public class ApplicationLoader extends Application {
 
         LauncherIconController.tryFixLauncherIconIfNeeded();
         ProxyRotationController.init();
+        if (tw.nekomimi.nekogram.proxy.BuiltinWsProxyManager.INSTANCE.isEnabled()) {
+            tw.nekomimi.nekogram.proxy.BuiltinWsProxyManager.INSTANCE.start();
+        }
     }
 
     // Local Push Service, TFoss implementation

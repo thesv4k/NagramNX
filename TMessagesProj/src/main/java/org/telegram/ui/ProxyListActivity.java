@@ -99,6 +99,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
     private int proxyEndRow;
     @Keep
     private int proxyAddRow;
+    private int proxyImportRow;
     private int proxyShadowRow;
     @Keep
     private int callsRow;
@@ -107,6 +108,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
     private int rotationTimeoutInfoRow;
     private int callsDetailRow;
     private int deleteAllRow;
+    private int builtinWsProxyRow;
+    private int builtinWsProxyInfoRow;
 
     private ItemTouchHelper itemTouchHelper;
     private NumberTextView selectedCountTextView;
@@ -181,7 +184,26 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         }
 
         public void setProxy(SharedConfig.ProxyInfo proxyInfo) {
-            textView.setText(proxyInfo.address + ":" + proxyInfo.port);
+            if (proxyInfo.isVlessProxy()) {
+                String name = "";
+                try {
+                    android.net.Uri u = android.net.Uri.parse(proxyInfo.secret);
+                    if (u.getFragment() != null) {
+                        name = java.net.URLDecoder.decode(u.getFragment(), "UTF-8");
+                    }
+                } catch (Exception ignored) {}
+                if (!TextUtils.isEmpty(name)) {
+                    textView.setText(name + " (" + proxyInfo.address + ":" + proxyInfo.port + ")");
+                } else {
+                    textView.setText(proxyInfo.address + ":" + proxyInfo.port + " (VLESS)");
+                }
+            } else if (proxyInfo.isWebProxy()) {
+                textView.setText(proxyInfo.address + ":" + proxyInfo.port + " (WEB)");
+            } else if (!TextUtils.isEmpty(proxyInfo.secret)) {
+                textView.setText(proxyInfo.address + ":" + proxyInfo.port + " (MTProto)");
+            } else {
+                textView.setText(proxyInfo.address + ":" + proxyInfo.port + " (SOCKS5)");
+            }
             currentInfo = proxyInfo;
         }
 
@@ -518,7 +540,14 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                 TextCheckCell textCheckCell = (TextCheckCell) view;
                 textCheckCell.setChecked(SharedConfig.proxyRotationEnabled);
                 SharedConfig.saveConfig();
+                updateRows(true);
 
+            } else if (position == builtinWsProxyRow) {
+                boolean enabled = !tw.nekomimi.nekogram.proxy.BuiltinWsProxyManager.INSTANCE.isEnabled();
+                tw.nekomimi.nekogram.proxy.BuiltinWsProxyManager.INSTANCE.setEnabled(enabled);
+                if (enabled) {
+                    useProxySettings = true;
+                }
                 updateRows(true);
             } else if (position == callsRow) {
                 useProxyForCalls = !useProxyForCalls;
@@ -564,6 +593,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                 ConnectionsManager.setProxySettings(useProxySettings, SharedConfig.currentProxy.address, SharedConfig.currentProxy.port, SharedConfig.currentProxy.username, SharedConfig.currentProxy.password, SharedConfig.currentProxy.secret);
             } else if (position == proxyAddRow) {
                 presentFragment(new ProxySettingsActivity());
+            } else if (position == proxyImportRow) {
+                tw.nekomimi.nekogram.utils.ProxyUtil.importFromClipboard(getParentActivity());
             } else if (position == deleteAllRow) {
                 AlertDialog.Builder builder = new AlertDialog.Builder(getParentActivity());
                 builder.setMessage(getString(R.string.DeleteAllProxiesConfirm));
@@ -715,6 +746,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         } else {
             useProxyShadowRow = -1;
         }
+        builtinWsProxyRow = rowCount++;
+        builtinWsProxyInfoRow = rowCount++;
         connectionsHeaderRow = rowCount++;
 
         if (notify) {
@@ -758,6 +791,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
             proxyEndRow = -1;
         }
         proxyAddRow = rowCount++;
+        proxyImportRow = rowCount++;
         proxyShadowRow = rowCount++;
         if (SharedConfig.currentProxy == null || SharedConfig.currentProxy.secret.isEmpty()) {
             boolean change = callsRow == -1;
@@ -829,16 +863,7 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
     @Override
     public void didReceivedNotification(int id, int account, Object... args) {
         if (id == NotificationCenter.proxyChangedByRotation) {
-            listView.forAllChild(view -> {
-                RecyclerView.ViewHolder holder = listView.getChildViewHolder(view);
-                if (holder.itemView instanceof TextDetailProxyCell) {
-                    TextDetailProxyCell cell = (TextDetailProxyCell) holder.itemView;
-                    cell.setChecked(cell.currentInfo == SharedConfig.currentProxy);
-                    cell.updateStatus();
-                }
-            });
-
-            updateRows(false);
+            updateRows(true);
         } else if (id == NotificationCenter.proxySettingsChanged) {
             updateRows(true);
         } else if (id == NotificationCenter.didUpdateConnectionState) {
@@ -962,7 +987,9 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                     TextSettingsCell textCell = (TextSettingsCell) holder.itemView;
                     textCell.setTextColor(Theme.getColor(Theme.key_windowBackgroundWhiteBlackText));
                     if (position == proxyAddRow) {
-                        textCell.setText(getString(R.string.AddProxy), deleteAllRow != -1);
+                        textCell.setText(getString(R.string.AddProxy), true);
+                    } else if (position == proxyImportRow) {
+                        textCell.setText("Импортировать из буфера (VLESS / MTProto / SOCKS5)", deleteAllRow != -1);
                     } else if (position == deleteAllRow) {
                         textCell.setTextColor(Theme.getColor(Theme.key_text_RedRegular));
                         textCell.setText(getString(R.string.DeleteAllProxies), false);
@@ -984,6 +1011,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                         checkCell.setTextAndCheck(getString(R.string.UseProxyForCalls), useProxyForCalls, false);
                     } else if (position == rotationRow) {
                         checkCell.setTextAndCheck(getString(R.string.UseProxyRotation), SharedConfig.proxyRotationEnabled, true);
+                    } else if (position == builtinWsProxyRow) {
+                        checkCell.setTextAndCheck("Встроенный Web-ускоритель (Flowseal Engine)", tw.nekomimi.nekogram.proxy.BuiltinWsProxyManager.INSTANCE.isEnabled(), false);
                     }
                     break;
                 }
@@ -993,6 +1022,8 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
                         cell.setText(getString(R.string.UseProxyForCallsInfo));
                     } else if (position == rotationTimeoutInfoRow) {
                         cell.setText(getString(R.string.ProxyRotationTimeoutInfo));
+                    } else if (position == builtinWsProxyInfoRow) {
+                        cell.setText("Автономный обход DPI и ускорение загрузки через официальные WebSocket CDN Telegram без сторонних серверов.");
                     }
                     break;
                 }
@@ -1141,9 +1172,9 @@ public class ProxyListActivity extends BaseFragment implements NotificationCente
         public int getItemViewType(int position) {
             if (position == useProxyShadowRow || position == proxyShadowRow) {
                 return VIEW_TYPE_SHADOW;
-            } else if (position == proxyAddRow || position == deleteAllRow) {
+            } else if (position == proxyAddRow || position == proxyImportRow || position == deleteAllRow) {
                 return VIEW_TYPE_TEXT_SETTING;
-            } else if (position == useProxyRow || position == rotationRow || position == callsRow) {
+            } else if (position == useProxyRow || position == rotationRow || position == callsRow || position == builtinWsProxyRow) {
                 return VIEW_TYPE_TEXT_CHECK;
             } else if (position == connectionsHeaderRow) {
                 return VIEW_TYPE_HEADER;

@@ -104,8 +104,8 @@ android {
         versionCode verCode
 
         // obtain your own keys at https://core.telegram.org/api/obtaining_api_id
-        def appId = '6'
-        def appHash = 'eb06d4abfb49dc3eeb1aeb98ae0f581e'
+        def appId = '2040'
+        def appHash = 'b18441a1ff607e10a989891a5462e627'
 
         if (properties != null) {
             appId = properties.getProperty('TELEGRAM_APP_ID') ?: System.getenv('TELEGRAM_APP_ID') ?: appId
@@ -159,6 +159,10 @@ android {
             storePassword keystorePwd
             keyAlias alias
             keyPassword pwd
+            enableV1Signing = true
+            enableV2Signing = true
+            enableV3Signing = true
+            enableV4Signing = false
         }
     }
 
@@ -194,7 +198,7 @@ android {
         }
     }
 
-    sourceSets.main.jniLibs.srcDirs = ['./jni/']
+    sourceSets.main.jniLibs.srcDirs = ['./jni/', './libs/']
 
     namespace = 'org.telegram.messenger'
 }

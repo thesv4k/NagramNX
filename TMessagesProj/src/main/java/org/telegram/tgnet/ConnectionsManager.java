@@ -665,6 +665,17 @@ public class ConnectionsManager extends BaseController {
         int proxyPort = preferences.getInt("proxy_port", 1080);
 
         if (preferences.getBoolean("proxy_enabled", false) && !TextUtils.isEmpty(proxyAddress)) {
+            boolean isWeb = proxySecret.startsWith("web_") || proxySecret.startsWith("web://") || proxySecret.startsWith("wss://") || "web".equals(proxySecret);
+            if (isWeb) {
+                int localPort = tw.nekomimi.nekogram.proxy.WebProxyServer.INSTANCE.start(proxyAddress, proxyPort, proxySecret);
+                if (localPort > 0) {
+                    proxyAddress = "127.0.0.1";
+                    proxyPort = localPort;
+                    proxyUsername = "";
+                    proxyPassword = "";
+                    proxySecret = "";
+                }
+            }
             native_setProxySettings(currentAccount, proxyAddress, proxyPort, proxyUsername, proxyPassword, proxySecret);
         }
         String installer = "";
@@ -773,6 +784,31 @@ public class ConnectionsManager extends BaseController {
         }
         if (secret == null) {
             secret = "";
+        }
+        if (secret.startsWith("vless://") || secret.startsWith("trojan://") || secret.startsWith("ss://") || secret.startsWith("vmess://")) {
+            final String checkAddress = address;
+            final int checkPort = port;
+            Utilities.globalQueue.postRunnable(() -> {
+                long start = System.currentTimeMillis();
+                try {
+                    java.net.Socket socket = new java.net.Socket();
+                    socket.connect(new java.net.InetSocketAddress(checkAddress, checkPort), 4000);
+                    long elapsed = System.currentTimeMillis() - start;
+                    socket.close();
+                    if (requestTimeDelegate != null) {
+                        requestTimeDelegate.run(elapsed);
+                    }
+                } catch (Exception e) {
+                    if (requestTimeDelegate != null) {
+                        requestTimeDelegate.run(-1);
+                    }
+                }
+            });
+            return 1;
+        }
+        if (secret.startsWith("web_") || secret.startsWith("web://") || secret.startsWith("wss://") || "web".equals(secret)) {
+            tw.nekomimi.nekogram.proxy.WebProxyServer.INSTANCE.checkPing(address, port, secret, requestTimeDelegate);
+            return 1;
         }
         return native_checkProxy(currentAccount, address, port, username, password, secret, requestTimeDelegate);
     }
@@ -994,9 +1030,43 @@ public class ConnectionsManager extends BaseController {
             secret = "";
         }
 
+        boolean isVless = secret.startsWith("vless://") || secret.startsWith("trojan://") || secret.startsWith("ss://") || secret.startsWith("vmess://");
+        boolean isWeb = !isVless && (secret.startsWith("web_") || secret.startsWith("web://") || secret.startsWith("wss://") || "web".equals(secret));
+        String targetAddress = address;
+        int targetPort = port;
+        String targetUser = username;
+        String targetPass = password;
+        String targetSecret = secret;
+
+        if (enabled && isVless) {
+            boolean started = tw.nekomimi.nekogram.proxy.SingBoxManager.INSTANCE.start(secret);
+            if (started) {
+                targetAddress = "127.0.0.1";
+                targetPort = tw.nekomimi.nekogram.proxy.SingBoxManager.INSTANCE.getActivePort();
+                targetUser = "";
+                targetPass = "";
+                targetSecret = "";
+            }
+        } else if (!enabled || !isVless) {
+            tw.nekomimi.nekogram.proxy.SingBoxManager.INSTANCE.stop();
+        }
+
+        if (enabled && isWeb && !TextUtils.isEmpty(address)) {
+            int localPort = tw.nekomimi.nekogram.proxy.WebProxyServer.INSTANCE.start(address, port, secret);
+            if (localPort > 0) {
+                targetAddress = "127.0.0.1";
+                targetPort = localPort;
+                targetUser = "";
+                targetPass = "";
+                targetSecret = "";
+            }
+        } else if (!enabled || !isWeb) {
+            tw.nekomimi.nekogram.proxy.WebProxyServer.INSTANCE.stop();
+        }
+
         for (int a = 0; a < UserConfig.MAX_ACCOUNT_COUNT; a++) {
-            if (enabled && !TextUtils.isEmpty(address)) {
-                native_setProxySettings(a, address, port, username, password, secret);
+            if (enabled && !TextUtils.isEmpty(targetAddress)) {
+                native_setProxySettings(a, targetAddress, targetPort, targetUser, targetPass, targetSecret);
             } else {
                 native_setProxySettings(a, "", 1080, "", "", "");
             }

@@ -386,6 +386,11 @@ public class SharedConfig {
         loadConfig();
     }
 
+    public static final int PROXY_TYPE_SOCKS5 = 0;
+    public static final int PROXY_TYPE_MTPROTO = 1;
+    public static final int PROXY_TYPE_WEB = 2;
+    public static final int PROXY_TYPE_VLESS = 3;
+
     public static class ProxyInfo {
 
         public String address;
@@ -393,12 +398,33 @@ public class SharedConfig {
         public String username;
         public String password;
         public String secret;
+        public int proxyType = PROXY_TYPE_SOCKS5;
 
         public long proxyCheckPingId;
         public long ping;
         public boolean checking;
         public boolean available;
         public long availableCheckTime;
+
+        public boolean isWebProxy() {
+            return (secret != null && (secret.startsWith("web_") || secret.startsWith("web://") || secret.startsWith("wss://") || "web".equals(secret))) || proxyType == PROXY_TYPE_WEB;
+        }
+
+        public boolean isVlessProxy() {
+            return (secret != null && (secret.startsWith("vless://") || secret.startsWith("vmess://") || secret.startsWith("trojan://") || secret.startsWith("ss://"))) || proxyType == PROXY_TYPE_VLESS;
+        }
+
+        public int getProxyType() {
+            if (isVlessProxy()) {
+                return PROXY_TYPE_VLESS;
+            } else if (isWebProxy()) {
+                return PROXY_TYPE_WEB;
+            } else if (!TextUtils.isEmpty(secret)) {
+                return PROXY_TYPE_MTPROTO;
+            } else {
+                return PROXY_TYPE_SOCKS5;
+            }
+        }
 
         public ProxyInfo(String address, int port, String username, String password, String secret) {
             this.address = address;
@@ -418,9 +444,21 @@ public class SharedConfig {
             if (this.secret == null) {
                 this.secret = "";
             }
+            if (isVlessProxy()) {
+                this.proxyType = PROXY_TYPE_VLESS;
+            } else if (isWebProxy()) {
+                this.proxyType = PROXY_TYPE_WEB;
+            } else if (!TextUtils.isEmpty(this.secret)) {
+                this.proxyType = PROXY_TYPE_MTPROTO;
+            } else {
+                this.proxyType = PROXY_TYPE_SOCKS5;
+            }
         }
 
         public String getLink() {
+            if (isVlessProxy()) {
+                return secret;
+            }
             StringBuilder url = new StringBuilder(!TextUtils.isEmpty(secret) ? "https://t.me/proxy?" : "https://t.me/socks?");
             try {
                 url.append("server=").append(URLEncoder.encode(address, "UTF-8")).append("&").append("port=").append(port);
@@ -438,6 +476,14 @@ public class SharedConfig {
         }
 
         public static ProxyInfo fromUrl(String url) {
+            if (url != null && (url.startsWith("vless://") || url.startsWith("trojan://") || url.startsWith("ss://") || url.startsWith("vmess://"))) {
+                tw.nekomimi.nekogram.proxy.VlessConfig vless = tw.nekomimi.nekogram.proxy.VlessUriParser.INSTANCE.parseVless(url);
+                if (vless != null) {
+                    ProxyInfo info = new ProxyInfo(vless.getServer(), vless.getPort(), "", "", url.trim());
+                    info.proxyType = PROXY_TYPE_VLESS;
+                    return info;
+                }
+            }
             Uri lnk = Uri.parse(url);
             if (lnk == null) throw new IllegalArgumentException(url);
             return new ProxyInfo(

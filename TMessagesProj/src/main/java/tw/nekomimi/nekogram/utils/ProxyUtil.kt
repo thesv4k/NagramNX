@@ -301,70 +301,45 @@ object ProxyUtil {
 
         var error = false
 
-        text?.trim()?.split('\n')?.map { it.split(" ") }?.forEach { it ->
-
-            it.forEach { line ->
-
-                if (line.startsWith("tg://proxy") ||
-                    line.startsWith("tg://socks") ||
-                    line.startsWith("https://t.me/proxy") ||
-                    line.startsWith("https://t.me/socks")) {
-
-                    runCatching { proxies.add(SharedConfig.ProxyInfo.fromUrl(line)) }.onFailure {
-
-                        error = true
-
-                        showToast(getString(R.string.BrokenLink) + ": ${it.message ?: it.javaClass.simpleName}")
-
+        val rawText = text?.trim()
+        if (rawText != null) {
+            val regex = java.util.regex.Pattern.compile("(?i)(vless|trojan|ss|vmess|tg|https)://[^\\s#]+(#[^\\s\\r\\n]*)?")
+            val matcher = regex.matcher(rawText)
+            while (matcher.find()) {
+                val link = matcher.group()
+                runCatching {
+                    val info = SharedConfig.ProxyInfo.fromUrl(link)
+                    if (info != null) {
+                        proxies.add(info)
                     }
-
+                }.onFailure {
+                    error = true
                 }
-
             }
-
         }
 
-        runCatching {
-
-            if (proxies.isEmpty() && !error) {
-
-                String(Base64.decode(text, Base64.NO_PADDING)).trim().split('\n').map { it.split(" ") }.forEach { str ->
-
-                    str.forEach { line ->
-
-                        if (line.startsWith("tg://proxy") ||
-                            line.startsWith("tg://socks") ||
-                            line.startsWith("https://t.me/proxy") ||
-                            line.startsWith("https://t.me/socks")) {
-
-                            runCatching { proxies.add(SharedConfig.ProxyInfo.fromUrl(line)) }.onFailure {
-
-                                error = true
-
-                                showToast(getString(R.string.BrokenLink) + ": ${it.message ?: it.javaClass.simpleName}")
-
-                            }
-
+        if (proxies.isEmpty() && text != null) {
+            runCatching {
+                val decoded = String(Base64.decode(text.trim(), Base64.NO_PADDING or Base64.DEFAULT))
+                val regex = java.util.regex.Pattern.compile("(?i)(vless|trojan|ss|vmess|tg|https)://[^\\s#]+(#[^\\s\\r\\n]*)?")
+                val matcher = regex.matcher(decoded)
+                while (matcher.find()) {
+                    val link = matcher.group()
+                    runCatching {
+                        val info = SharedConfig.ProxyInfo.fromUrl(link)
+                        if (info != null) {
+                            proxies.add(info)
                         }
-
                     }
-
                 }
-
             }
-
         }
 
         if (proxies.isEmpty()) {
-
             if (!error) showToast(getString(R.string.BrokenLink))
-
             return
-
-        } else if (!error) {
-
-            AlertUtil.showSimpleAlert(ctx, getString(R.string.ImportedProxies) + "\n\n" + proxies.joinToString("\n") { it.address })
-
+        } else {
+            AlertUtil.showSimpleAlert(ctx, getString(R.string.ImportedProxies) + " (${proxies.size})\n\n" + proxies.joinToString("\n") { "${it.address}:${it.port} (${if (it.isVlessProxy) "VLESS" else "Proxy"})" })
         }
 
         proxies.forEach {
