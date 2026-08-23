@@ -10,6 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Релиз" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/actions"><img src="https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/build-release.yml?style=flat-square" alt="Статус сборки" /></a>
   <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="Лицензия" /></a>
 </p>
 
@@ -61,6 +62,31 @@ Telegram может разлогинить все сессии, если при 
 1. Входи в NagramNX с **того же IP**, на котором сейчас работает твой основной клиент.
 2. Если используешь VPN — либо включи его в обоих клиентах, либо выключи в обоих.
 3. Если всё-таки выкинуло — просто зайди заново с того же IP/сети.
+
+---
+
+## 🔒 Безопасность и открытость
+
+NagramNX полностью открыт (Open Source). Мы гарантируем, что приложение не содержит скрытых закладок, телеметрии и не передаёт ваши данные третьим лицам:
+
+1. **Прозрачный код:**
+   Все изменения относительно оригинального NagramX можно посмотреть в один клик:
+   👉 [**Сравнить diff с upstream NagramX**](https://github.com/thesv4k/NagramNX/compare/risin42:NagramX:dev...thesv4k:NagramNX:main)
+   Добавлены только `SingBoxManager.kt`, `VlessUriParser.kt`, `ProxyRotationController.java` и нативный код `tg-ws-proxy`.
+
+2. **Как проверить трафик самостоятельно (для параноиков):**
+   - Установите open-source сниффер трафика без рута [**PCAPdroid**](https://github.com/emanuele-f/PCAPdroid).
+   - Выберите `NagramNX` в качестве отслеживаемого приложения.
+   - Убедитесь, что соединения идут **только** на официальные дата-центры Telegram (`149.154.167.*`, `91.108.*` и т.д.), ваш локальный порт `127.0.0.1` и указанный вами прокси. Никаких левых хостов, аналитики и трекеров.
+
+3. **Контрольные суммы релиза v12.10.0 (1261):**
+   | Файл | SHA-256 |
+   | :--- | :--- |
+   | `NagramNX-v12.10.0(1261)-arm64-v8a.apk` | `a060a5afda2036f1aafe20efb25901b52987be5f9cd441b6ed15a3c0362d50fa` |
+   | `NagramNX-v12.10.0(1261)-x86_64.apk` | `a85ccf7f8d3890852f70be22e2c3787c4acaad80f44c38a55d1858a4866eed5f` |
+
+   *SHA-256 отпечаток сертификата подписи:*
+   `DC:15:C7:52:A3:52:FE:69:79:94:6B:41:68:C8:9A:42:00:2B:97:F7:C0:3D:D5:11:1E:73:5D:8F:DD:20:42:C0`
 
 ---
 
