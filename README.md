@@ -1,89 +1,108 @@
-# Nagram X
-[![Crowdin](https://badges.crowdin.net/NagramX/localized.svg)](https://crowdin.com/project/NagramX)  
-A variant of [Nagram](https://github.com/NextAlone/Nagram) with additional features.
+# NagramNX
 
-## Download
+<p align="center">
+  <img src="TMessagesProj/src/main/res/drawable-xxxhdpi/ic_launcher.png" width="128" height="128" alt="NagramNX Logo" />
+</p>
 
-Latest versions are available through:
-* [Telegram Channel](https://t.me/NagramX) (Latest Beta)
-* [GitHub Actions](https://github.com/risin42/NagramX/actions/workflows/staging.yml) (CI Artifacts)
-* [GitHub Releases](https://github.com/risin42/NagramX/releases) (Latest Stable)
+<p align="center">
+  <b>Next-generation Telegram Android client with advanced censorship-circumvention tools and smart proxy routing.</b>
+</p>
 
-## Verify APK
+<p align="center">
+  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Latest Release" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/actions"><img src="https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/staging.yml?style=flat-square" alt="Build Status" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="License" /></a>
+</p>
 
-Official APKs use the following Android signing certificate:
+---
 
-* Package name: `nu.gpu.nagram` / `nu.gpu.nagramx` (base version)
-* SHA-256: `0D:51:91:56:E8:0C:91:8C:28:C4:80:BF:D1:3F:31:6A:3B:3B:F7:22:DB:53:2F:AB:74:66:0E:C8:E5:C5:06:A1`
+## ⚡ Key Features
 
-## Compilation Guide
+### 🛡 Built-in Flowseal TG-WS-Proxy
+- **No external server required**: Runs locally as an embedded native service on Android.
+- **WebSocket obfuscation**: Wraps standard MTProto Telegram traffic into innocent-looking WebSockets over TLS to bypass Deep Packet Inspection (DPI) and regional ISP blocks.
+- **Dynamic port & random secret**: Allocates random unused ports automatically with cryptographic secret generation on each activation.
 
-1. Clone the repository with its submodules:
+### 🚀 Embedded Sing-box Core (v1.13.19)
+NagramNX embeds the high-performance **Sing-box** universal proxy engine:
+- **VLESS + Reality XTLS** (`xtls-rprx-vision`): Next-gen TLS camouflage simulating legitimate websites (no certificate configuration needed).
+- **VLESS + HTTPUpgrade TLS**: Standard RFC-compliant HTTP Upgrade transport.
+- **VLESS + WebSocket TLS**: Universal WebSocket transport compatible with Cloudflare and CDNs.
+- **VLESS + gRPC TLS**: High-throughput HTTP/2 multiplexed transport.
+- **Trojan TLS** & **Shadowsocks**: Native Trojan password parsing and Shadowsocks routing.
+- **Built-in Standalone DNS Engine**: Self-contained `ipv4_only` resolver inside Sing-box routing, preventing ISP DNS hijacking on Android.
 
-    ```bash
-    git clone --recursive --shallow-submodules https://github.com/risin42/NagramX.git NagramX
-    ```
+### 📋 Smart Multi-Link Clipboard Import
+- Import entire blocks of proxy links (`vless://`, `trojan://`, `ss://`, `tg://`, `https://t.me/proxy...`) in one tap directly from your clipboard.
+- Regex URL parser with automatic percent-decoding for emoji server names, country flags, and remark tags (`#🇪🇪 EE | Reality`).
 
-    If you already cloned the repository without submodules, run:
+### 🔄 Fixed & Reliable Proxy Auto-Rotation
+- Real-time connection stall detection across **all proxy protocols** (MTProto, VLESS, Trojan, SOCKS5).
+- Configurable timeout rotation (5s, 10s, 15s, 30s, 60s) with automatic failover to the best working server by lowest latency ping.
 
-    ```bash
-    git submodule update --init --recursive --depth=1
-    ```
+### 🥷 Privacy & Customization (Nagram Heritage)
+- Ghost mode (read messages without sending read receipts, hide typing status).
+- Message edit & delete history logs.
+- Custom fonts, themes, tablet mode, and sticker management.
+- Google Play Services / UnifiedPush notification support.
 
-2. Obtain API credentials (`TELEGRAM_APP_ID` and `TELEGRAM_APP_HASH`) from [Telegram Developer Portal](https://my.telegram.org/auth). Create `local.properties` in the project root with:
+---
 
-   ```properties
-   TELEGRAM_APP_ID=<your_telegram_app_id>
-   TELEGRAM_APP_HASH=<your_telegram_app_hash>
+## 📥 Download
+
+Pre-built release APKs are available on the [**Releases Page**](https://github.com/thesv4k/NagramNX/releases):
+
+| Architecture | Description | Download |
+| :--- | :--- | :--- |
+| **`arm64-v8a`** | Modern Android smartphones and tablets (64-bit) | [Download Latest APK](https://github.com/thesv4k/NagramNX/releases/latest) |
+| **`x86_64`** | Android emulators & Chromebooks (64-bit x86) | [Download Latest APK](https://github.com/thesv4k/NagramNX/releases/latest) |
+
+---
+
+## 🛠 Compilation Guide
+
+### Requirements
+- JDK 21+
+- Android SDK 35 (Build tools 35.0.0+)
+- Android NDK 27+
+- CMake 3.22+
+
+### Steps
+
+1. **Clone the repository with submodules:**
+   ```bash
+   git clone --recursive https://github.com/thesv4k/NagramNX.git NagramNX
+   cd NagramNX
    ```
 
-3. For APK signing: Replace `release.keystore` with your keystore and add signing configuration to `local.properties`:
-
+2. **Configure Telegram API credentials:**
+   Obtain `TELEGRAM_APP_ID` and `TELEGRAM_APP_HASH` from [my.telegram.org](https://my.telegram.org/auth) and create `local.properties`:
    ```properties
-   KEYSTORE_PASS=<your_keystore_password>
-   ALIAS_NAME=<your_alias_name>
-   ALIAS_PASS=<your_alias_password>
+   TELEGRAM_APP_ID=12345678
+   TELEGRAM_APP_HASH=0123456789abcdef0123456789abcdef
    ```
 
-4. For FCM support: Replace `TMessagesProj/google-services.json` with your own configuration file.
-
-5. Replace project-specific metadata:
-
-    - Set your Google Maps API key in the `com.google.android.maps.v2.API_KEY` meta-data entry in `TMessagesProj/src/main/AndroidManifest.xml`.
-    - Set `BaseRemoteHelper.CHANNEL_METADATA_ID` in `TMessagesProj/src/main/java/tw/nekomimi/nekogram/helpers/remote/BaseRemoteHelper.java` to your metadata channel's numeric ID, without the `-100` prefix.
-
-6. Open the project in Android Studio to start building.
-
-## GitHub Actions Build
-
-1. Replace `TMessagesProj/release.keystore` with your keystore file.
-
-2. Configure `local.properties` with the following:
-
-   ```properties
-   KEYSTORE_PASS=<your_keystore_password>
-   ALIAS_NAME=<your_alias_name>
-   ALIAS_PASS=<your_alias_password>
-   TELEGRAM_APP_ID=<your_telegram_app_id>
-   TELEGRAM_APP_HASH=<your_telegram_app_hash>
+3. **Build the APK:**
+   ```bash
+   ./gradlew assembleRelease
    ```
+   The built APKs will be located in `TMessagesProj/build/outputs/apk/release/`.
 
-   Base64 encode the contents of this file.
+---
 
-3. Configure GitHub Action secrets:
-   - `LOCAL_PROPERTIES`: Base64-encoded content from step 2
-   - `HELPER_BOT_TOKEN`: Telegram bot token from [@Botfather](https://t.me/Botfather) (e.g., `1111:abcd`)
-   - `HELPER_BOT_TARGET`: Primary Telegram chat ID (e.g., `777000`)
-   - `HELPER_BOT_CANARY_TARGET`: Chat ID for test builds and metadata (can match `HELPER_BOT_TARGET`)
+## 🌟 Acknowledgments
 
-4. Trigger the Release Build workflow.
-
-## Acknowledgments
-
-- [AyuGram](https://github.com/AyuGram/AyuGram4A)
-- [Cherrygram](https://github.com/arsLan4k1390/Cherrygram)
-- [Dr4iv3rNope](https://github.com/Dr4iv3rNope/NotSoAndroidAyuGram)
-- [exteraGram](https://github.com/exteraSquad/exteraGram)
-- [Nagram](https://github.com/NextAlone/Nagram)
+NagramNX is built on top of incredible open-source projects and communities:
+- [Flowseal / tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) & [amurcanov / tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android)
+- [SagerNet / sing-box](https://github.com/SagerNet/sing-box)
+- [NagramX / risin42](https://github.com/risin42/NagramX)
+- [Nagram / NextAlone](https://github.com/NextAlone/Nagram)
 - [Nekogram](https://github.com/Nekogram/Nekogram)
-- [OctoGram](https://github.com/OctoGramApp/OctoGram)
+- [AyuGram](https://github.com/AyuGram/AyuGram4A)
+- [Telegram for Android](https://github.com/DrKLO/Telegram)
+
+---
+
+## 📜 License
+
+NagramNX is licensed under the [GNU General Public License v3.0](LICENSE).
