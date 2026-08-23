@@ -1,108 +1,105 @@
 # NagramNX
 
 <p align="center">
-  <img src="https://raw.githubusercontent.com/thesv4k/NagramNX/refs/heads/main/assets/logos/nagram_blue_round.png" width="128" height="128" alt="NagramNX Logo" />
+  <img src="https://raw.githubusercontent.com/thesv4k/NagramNX/refs/heads/main/assets/logos/nagram_blue_round.png" width="128" height="128" alt="NagramNX" />
 </p>
 
 <p align="center">
-  <b>Next-generation Telegram Android client with advanced censorship-circumvention tools and smart proxy routing.</b>
+  <b>Форк Telegram для Android с упором на обход блокировок и работу через прокси.</b>
 </p>
 
 <p align="center">
-  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Latest Release" /></a>
-  <a href="https://github.com/thesv4k/NagramNX/actions"><img src="https://img.shields.io/github/actions/workflow/status/thesv4k/NagramNX/staging.yml?style=flat-square" alt="Build Status" /></a>
-  <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="License" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/releases"><img src="https://img.shields.io/github/v/release/thesv4k/NagramNX?style=flat-square&color=blue" alt="Релиз" /></a>
+  <a href="https://github.com/thesv4k/NagramNX/blob/main/LICENSE"><img src="https://img.shields.io/badge/License-GPL%20v3-green.svg?style=flat-square" alt="Лицензия" /></a>
 </p>
 
 ---
 
-## ⚡ Key Features
+## Что умеет
 
-### 🛡 Built-in Flowseal TG-WS-Proxy
-- **No external server required**: Runs locally as an embedded native service on Android.
-- **WebSocket obfuscation**: Wraps standard MTProto Telegram traffic into innocent-looking WebSockets over TLS to bypass Deep Packet Inspection (DPI) and regional ISP blocks.
-- **Dynamic port & random secret**: Allocates random unused ports automatically with cryptographic secret generation on each activation.
+### Встроенный TG-WS-Proxy (Flowseal)
+Локальный MTProto-прокси, который оборачивает трафик в WebSocket и прокидывает через TLS — провайдер видит обычный HTTPS, а не Telegram. Работает прямо на устройстве, без внешних серверов. Порт и секрет генерируются автоматически при каждом запуске.
 
-### 🚀 Embedded Sing-box Core (v1.13.19)
-NagramNX embeds the high-performance **Sing-box** universal proxy engine:
-- **VLESS + Reality XTLS** (`xtls-rprx-vision`): Next-gen TLS camouflage simulating legitimate websites (no certificate configuration needed).
-- **VLESS + HTTPUpgrade TLS**: Standard RFC-compliant HTTP Upgrade transport.
-- **VLESS + WebSocket TLS**: Universal WebSocket transport compatible with Cloudflare and CDNs.
-- **VLESS + gRPC TLS**: High-throughput HTTP/2 multiplexed transport.
-- **Trojan TLS** & **Shadowsocks**: Native Trojan password parsing and Shadowsocks routing.
-- **Built-in Standalone DNS Engine**: Self-contained `ipv4_only` resolver inside Sing-box routing, preventing ISP DNS hijacking on Android.
+### Sing-box ядро (v1.13.19)
+Полноценный прокси-движок sing-box вшит в приложение. Поддерживаемые протоколы:
+- **VLESS + Reality** (`xtls-rprx-vision`) — маскировка под настоящие сайты без своих сертификатов
+- **VLESS + HTTPUpgrade** — HTTP Upgrade поверх TLS
+- **VLESS + WebSocket** — классический WS-транспорт, работает через CDN
+- **VLESS + gRPC** — мультиплексированный HTTP/2 транспорт
+- **Trojan** и **Shadowsocks**
 
-### 📋 Smart Multi-Link Clipboard Import
-- Import entire blocks of proxy links (`vless://`, `trojan://`, `ss://`, `tg://`, `https://t.me/proxy...`) in one tap directly from your clipboard.
-- Regex URL parser with automatic percent-decoding for emoji server names, country flags, and remark tags (`#🇪🇪 EE | Reality`).
+DNS-запросы идут через собственный резолвер sing-box — провайдерский DNS не может подменить ответы.
 
-### 🔄 Fixed & Reliable Proxy Auto-Rotation
-- Real-time connection stall detection across **all proxy protocols** (MTProto, VLESS, Trojan, SOCKS5).
-- Configurable timeout rotation (5s, 10s, 15s, 30s, 60s) with automatic failover to the best working server by lowest latency ping.
+### Импорт ссылок из буфера обмена
+Копируешь пачку ссылок (`vless://`, `trojan://`, `ss://`, `tg://proxy`, `https://t.me/proxy`...) — приложение само их распарсит и добавит все разом. Эмодзи-флаги и названия серверов корректно декодируются.
 
-### 🥷 Privacy & Customization (Nagram Heritage)
-- Ghost mode (read messages without sending read receipts, hide typing status).
-- Message edit & delete history logs.
-- Custom fonts, themes, tablet mode, and sticker management.
-- Google Play Services / UnifiedPush notification support.
+### Авто-ротация прокси
+Если текущий прокси залагал или отвалился — клиент автоматически переключится на следующий рабочий. Работает для всех типов: MTProto, VLESS, Trojan, SOCKS5. Таймаут настраивается (5с / 10с / 15с / 30с / 60с).
+
+### Остальное (из Nagram)
+- Ghost mode (чтение без «прочитано», скрытие набора текста)
+- Логи редактирования и удаления сообщений
+- Кастомные шрифты, темы, режим планшета
+- Уведомления через GMS / UnifiedPush
 
 ---
 
-## 📥 Download
+## Скачать
 
-Pre-built release APKs are available on the [**Releases Page**](https://github.com/thesv4k/NagramNX/releases):
+Готовые APK лежат в [**Releases**](https://github.com/thesv4k/NagramNX/releases):
 
-| Architecture | Description | Download |
+| Архитектура | Для чего | Ссылка |
 | :--- | :--- | :--- |
-| **`arm64-v8a`** | Modern Android smartphones and tablets (64-bit) | [Download Latest APK](https://github.com/thesv4k/NagramNX/releases/latest) |
-| **`x86_64`** | Android emulators & Chromebooks (64-bit x86) | [Download Latest APK](https://github.com/thesv4k/NagramNX/releases/latest) |
+| `arm64-v8a` | Телефоны и планшеты (64-бит) | [Скачать](https://github.com/thesv4k/NagramNX/releases/latest) |
+| `x86_64` | Эмуляторы, Chromebook | [Скачать](https://github.com/thesv4k/NagramNX/releases/latest) |
+
+### ⚠️ Первый вход: fraud prevention
+
+Telegram может разлогинить все сессии, если при входе в новый клиент у тебя **сменился IP** (например, включён/выключен VPN). Это **не баг клиента** — так работает защита от фрода в самом Telegram.
+
+Чтобы этого избежать:
+1. Входи в NagramNX с **того же IP**, на котором сейчас работает твой основной клиент.
+2. Если используешь VPN — либо включи его в обоих клиентах, либо выключи в обоих.
+3. Если всё-таки выкинуло — просто зайди заново с того же IP/сети.
 
 ---
 
-## 🛠 Compilation Guide
+## Сборка из исходников
 
-### Requirements
-- JDK 21+
-- Android SDK 35 (Build tools 35.0.0+)
-- Android NDK 27+
-- CMake 3.22+
+Понадобится: JDK 21+, Android SDK 35, NDK 27+, CMake 3.22+
 
-### Steps
-
-1. **Clone the repository with submodules:**
+1. Клонируем с сабмодулями:
    ```bash
-   git clone --recursive https://github.com/thesv4k/NagramNX.git NagramNX
+   git clone --recursive https://github.com/thesv4k/NagramNX.git
    cd NagramNX
    ```
 
-2. **Configure Telegram API credentials:**
-   Obtain `TELEGRAM_APP_ID` and `TELEGRAM_APP_HASH` from [my.telegram.org](https://my.telegram.org/auth) and create `local.properties`:
+2. Получаем `APP_ID` и `APP_HASH` на [my.telegram.org](https://my.telegram.org/auth), прописываем в `local.properties`:
    ```properties
    TELEGRAM_APP_ID=12345678
    TELEGRAM_APP_HASH=0123456789abcdef0123456789abcdef
    ```
 
-3. **Build the APK:**
+3. Собираем:
    ```bash
    ./gradlew assembleRelease
    ```
-   The built APKs will be located in `TMessagesProj/build/outputs/apk/release/`.
+   APK будут в `TMessagesProj/build/outputs/apk/release/`.
 
 ---
 
-## 🌟 Acknowledgments
+## Благодарности
 
-NagramNX is built on top of incredible open-source projects and communities:
-- [Flowseal / tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) & [amurcanov / tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android)
+- [Flowseal / tg-ws-proxy](https://github.com/Flowseal/tg-ws-proxy) и [amurcanov / tg-ws-proxy-android](https://github.com/amurcanov/tg-ws-proxy-android)
 - [SagerNet / sing-box](https://github.com/SagerNet/sing-box)
-- [NagramX / risin42](https://github.com/risin42/NagramX)
-- [Nagram / NextAlone](https://github.com/NextAlone/Nagram)
+- [NagramX](https://github.com/risin42/NagramX)
+- [Nagram](https://github.com/NextAlone/Nagram)
 - [Nekogram](https://github.com/Nekogram/Nekogram)
 - [AyuGram](https://github.com/AyuGram/AyuGram4A)
 - [Telegram for Android](https://github.com/DrKLO/Telegram)
 
 ---
 
-## 📜 License
+## Лицензия
 
-NagramNX is licensed under the [GNU General Public License v3.0](LICENSE).
+[GNU General Public License v3.0](LICENSE)
